@@ -215,24 +215,14 @@ class Randomizer implements RandomizerContract
             $nice_items = array_merge($nice_items, $nice_items_armors);
         }
 
-        if ($world->config('mode.weapons') === 'swordless') {
-            foreach ($nice_items_swords as $unneeded) {
-                $nice_items[] = Item::get('TwentyRupees2', $world);
-            }
-            $world_items = $world->collectItems();
-            // check for pregressive bows
-            if (!$world_items->merge($advancement_items)->has('ProgressiveBow', 2)) {
-                $world_items = $world_items->values();
-                if (
-                    !in_array(Item::get('SilverArrowUpgrade', $world), $world_items)
-                    && !in_array(Item::get('BowAndSilverArrows', $world), $world_items)
-                ) {
-                    if (array_search(Item::get('SilverArrowUpgrade', $world), $nice_items) === false && $world->config('difficulty') !== 'custom') {
-                        $advancement_items[] = Item::get('SilverArrowUpgrade', $world);
-                    }
-                }
-            }
-        } elseif ($world->config('mode.weapons') === 'vanilla') {
+        $rules = $world->getRules();
+
+        foreach ($rules as $rule)
+        {
+            $rule->prepareWorld($world, $advancement_items, $nice_items_swords, $nice_items);
+        }
+
+        if ($world->config('mode.weapons') === 'vanilla') {
             $uncle_sword = Item::get('UncleSword', $world)->setTarget(array_pop($nice_items_swords));
             $world->getLocation("Link's Uncle")->setItem($uncle_sword);
 

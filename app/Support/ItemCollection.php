@@ -690,6 +690,49 @@ class ItemCollection extends Collection
             || $this->has('BottleWithGoldBee');
     }
 
+    public function hasAny($itemList, $world = null)
+    {
+        foreach ($itemList as $item)
+        {
+            if ($this->has($item) 
+               || ($item === "Bow" && $this->canShootArrows($world))
+               || ($item === "Sword" && $this->hasSword())
+               || ($item === "Bomb" && $this->canBombThings()))
+            {
+                return True;
+            }
+        }
+        return False;
+    }
+
+    public function hasRod($magicLevel = null)
+    {
+        return $this->hasEnoughMagic("FireRod", $magicLevel) || $this->hasEnoughMagic("IceRod", $magicLevel);
+    }
+
+    public function hasCane($magicLevel = null)
+    {
+        return $this->hasEnoughMagic("CaneOfByrna", $magicLevel) || $this->hasEnoughMagic("CaneOfSomaria", $magicLevel);
+    }
+
+    public function hasEnoughMagic($magicItem, $magicLevel = null)
+    {
+        $hasItem = False;
+        $hasEnoughMagic = True;
+
+        if ($this->has($magicItem))
+        {
+            $hasItem = True;
+        }
+
+        if (!$this->canExtendMagic($magicLevel))
+        {
+            $hasEnoughMagic = False;
+        }
+
+        return $hasItem && $hasEnoughMagic;
+    }
+
     public function __toString()
     {
         if ($this->string_rep === null) {

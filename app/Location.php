@@ -74,14 +74,23 @@ class Location
         $items->setChecksForWorld($this->region->getWorld()->id);
         $old_item = $this->item;
         $this->setItem($item);
-        $fillable = ($this->always_callback && call_user_func($this->always_callback, $item, $items))
-            || ($this->region->canFill($item)
-                && (!$this->fill_callback
-                    || call_user_func($this->fill_callback, $item, $this->region->getWorld()->getLocations(), $items))
-                && (!$check_access || $this->canAccess($items)));
+        $fillable = $this->getAlwaysAllow($item, $items) || $this->regionCanFill($item, $items, $check_access);
         $this->setItem($old_item);
 
         return $fillable;
+    }
+
+    protected function regionCanFill($item, $items, $check_access)
+    {
+        $fillRulesPass = (!$this->fill_callback ||
+                         call_user_func($this->fill_callback, $item, $this->region->getWorld()->getLocations(), $items));
+        $accessPass = (!$check_access || $this->canAccess($items));
+        return ($this->region->canFill($item) && $fillRulesPass && $accessPass);
+    }
+
+    protected function getAlwaysAllow($item, $items)
+    {
+        return ($this->always_callback && call_user_func($this->always_callback, $item, $items));
     }
 
     /**

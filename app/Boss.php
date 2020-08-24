@@ -65,68 +65,31 @@ class Boss
         }
         static::$worlds[$world->id] = $world;
 
-        static::$items[$world->id] = new BossCollection([
-            new static("Armos Knights", "Armos", function ($locations, $items) use ($world) {
-                return $items->hasSword() || $items->has('Hammer') || $items->canShootArrows($world)
-                    || $items->has('Boomerang') || $items->has('RedBoomerang')
-                    || ($items->canExtendMagic(4) && ($items->has('FireRod') || $items->has('IceRod')))
-                    || ($items->canExtendMagic(2) && ($items->has('CaneOfByrna') || $items->has('CaneOfSomaria')));
-            }),
-            new static("Lanmolas", "Lanmola", function ($locations, $items) use ($world) {
-                return $items->hasSword() || $items->has('Hammer')
-                    || $items->canShootArrows($world) || $items->has('FireRod') || $items->has('IceRod')
-                    || $items->has('CaneOfByrna') || $items->has('CaneOfSomaria');
-            }),
-            new static("Moldorm", "Moldorm", function ($locations, $items) {
-                return $items->hasSword() || $items->has('Hammer');
-            }),
-            new static("Agahnim", "Agahnim", function ($locations, $items) {
-                return $items->hasSword() || $items->has('Hammer') || $items->has('BugCatchingNet');
-            }),
-            new static("Helmasaur King", "Helmasaur", function ($locations, $items) use ($world) {
-                return ($items->canBombThings() || $items->has('Hammer'))
-                    && ($items->hasSword(2) || $items->canShootArrows($world)
-                        || ($world->config('itemPlacement') !== 'basic' && $items->hasSword()));
-            }),
-            new static("Arrghus", "Arrghus", function ($locations, $items) use ($world) {
-                return ($world->config('itemPlacement') !== 'basic' || $world->config('mode.weapons') === 'swordless' || $items->hasSword(2))
-                    && $items->has('Hookshot') && ($items->has('Hammer') || $items->hasSword()
-                        || (($items->canExtendMagic(2) || $items->canShootArrows($world)) && ($items->has('FireRod') || $items->has('IceRod'))));
-            }),
-            new static("Mothula", "Mothula", function ($locations, $items) use ($world) {
-                return ($world->config('itemPlacement') !== 'basic' || $items->hasSword(2) || ($items->canExtendMagic(2) && $items->has('FireRod')))
-                    && ($items->hasSword() || $items->has('Hammer')
-                        || ($items->canExtendMagic(2) && ($items->has('FireRod') || $items->has('CaneOfSomaria')
-                            || $items->has('CaneOfByrna')))
-                        || $items->canGetGoodBee());
-            }),
-            new static("Blind", "Blind", function ($locations, $items) use ($world) {
-                return ($world->config('itemPlacement') !== 'basic' || $world->config('mode.weapons') === 'swordless' || ($items->hasSword() && ($items->has('Cape') || $items->has('CaneOfByrna'))))
-                    && ($items->hasSword() || $items->has('Hammer')
-                        || $items->has('CaneOfSomaria') || $items->has('CaneOfByrna'));
-            }),
-            new static("Kholdstare", "Kholdstare", function ($locations, $items) use ($world) {
-                return ($world->config('itemPlacement') !== 'basic' || $items->hasSword(2) || ($items->canExtendMagic(3) && $items->has('FireRod'))
-                    || ($items->has('Bombos') && ($world->config('mode.weapons') === 'swordless' || $items->hasSword()) && $items->canExtendMagic(2) && $items->has('FireRod')))
-                    && $items->canMeltThings($world) && ($items->has('Hammer') || $items->hasSword()
-                        || ($items->canExtendMagic(3) && $items->has('FireRod'))
-                        || ($items->canExtendMagic(2) && $items->has('FireRod') && $items->has('Bombos') && $world->config('mode.weapons') === 'swordless'));
-            }),
-            new static("Vitreous", "Vitreous", function ($locations, $items) use ($world) {
-                return ($world->config('itemPlacement') !== 'basic' || $items->hasSword(2) || $items->canShootArrows($world))
-                    && ($items->has('Hammer') || $items->hasSword() || $items->canShootArrows($world));
-            }),
-            new static("Trinexx", "Trinexx", function ($locations, $items) use ($world) {
-                return $items->has('FireRod') && $items->has('IceRod')
-                    && ($world->config('itemPlacement') !== 'basic' || $world->config('mode.weapons') === 'swordless' || $items->hasSword(3) || ($items->canExtendMagic(2) && $items->hasSword(2)))
-                    && ($items->hasSword(3) || $items->has('Hammer')
-                        || ($items->canExtendMagic(2) && $items->hasSword(2))
-                        || ($items->canExtendMagic(4) && $items->hasSword()));
-            }),
-            new static("Agahnim2", "Agahnim2", function ($locations, $items) {
-                return $items->hasSword() || $items->has('Hammer') || $items->has('BugCatchingNet');
-            }),
-        ]);
+        $bossList = [
+            "Armos" => "Armos Knights",
+            "Lanmola" => "Lanmolas",
+            "Moldorm" => "Moldorm",
+            "Agahnim" => "Agahnim",
+            "Helmasaur" => "Helmasaur King",
+            "Arrghus" => "Arrghus",
+            "Mothula" => "Mothula",
+            "Blind" => "Blind",
+            "Kholdstare" => "Kholdstare",
+            "Vitreous" => "Vitreous",
+            "Trinexx" => "Trinexx",
+            "Agahnim2" => "Agahnim2"
+        ];
+
+        $bosses = [];
+
+        foreach ($bossList as $bossName => $bossDescription)
+        {
+            $bosses[] = new static($bossDescription, $bossName, function ($locations, $items) use ($world, $bossName) {
+                return $world->checkBossRules($items, $bossName);
+            });
+        }
+
+        static::$items[$world->id] = new BossCollection($bosses);
 
         return static::all($world);
     }

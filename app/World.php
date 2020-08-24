@@ -7,6 +7,8 @@ use ALttP\Support\ItemCollection;
 use ALttP\Support\LocationCollection;
 use ALttP\Support\ShopCollection;
 use ALttP\Sprite\Droppable;
+use ALttP\Rule\Swordless;
+use ALttP\Rule\Sworded;
 use ErrorException;
 
 /**
@@ -49,6 +51,8 @@ abstract class World
     protected $override_patch = null;
     /** @var array */
     protected $spoiler = [];
+    /** @var array */
+    protected $rules = [];
 
     /**
      * Create a new world and initialize all of the Regions within it
@@ -184,13 +188,37 @@ abstract class World
 
         // In swordless mode silvers are 100% required
         if ($this->config('mode.weapons') === 'swordless') {
-            $this->config['region.requireBetterBow'] = true;
-            $this->config['item.overflow.count.Bow'] = 2;
+            $this->rules[] = new Swordless();
+        }
+        else {
+            $this->rules[] = new Sworded();
+        }
+
+        foreach ($this->rules as $rule)
+        {
+            $rule->initWorld($this->config);
         }
 
         if ($this->config('itemPlacement') === 'basic') {
             $this->config['region.forceSkullWoodsKey'] = true;
         }
+    }
+
+    public function getRules()
+    {
+        return $this->rules;
+    }
+
+    public function checkBossRules($items, $bossName)
+    {
+        foreach ($this->getRules() as $rule)
+        {
+            if ($rule->canBeatBoss($this, $bossName, $items))
+            {
+                return True;
+            }
+        }
+        return False;
     }
 
     /**
