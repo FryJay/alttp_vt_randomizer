@@ -27,8 +27,6 @@ class Sworded extends Swordless
             case 'Helmasaur':
                 $swordedResult = $items->hasAny(['Bomb', 'Hammer'])
                     && ($items->hasSword(2) || $world->config('itemPlacement') !== 'basic');
-                // $swordedResult = ($items->canBombThings() || $items->has('Hammer'))
-                //     && ($items->hasSword(2) || $world->config('itemPlacement') !== 'basic');
                 break;
             case 'Arrghus':
                 $canGetArrgi = $items->has('Hookshot');
@@ -50,30 +48,6 @@ class Sworded extends Swordless
 
                 $swordedResult = $canGetArrgi && $canKillArrgi;
                 break;
-                // $canGetArrgi = $items->has('Hookshot');
-                // $canKillArrgi = 
-                // (
-                //     $world->config('itemPlacement') !== 'basic' || 
-                //     $items->hasSword(2)
-                // ) && 
-                // (
-                //     $items->hasAny(['Hammer', 'Sword']) ||
-                //     // $items->has('Hammer') || 
-                //     // $items->hasSword() || 
-                //     (
-                //         (
-                //             $items->canExtendMagic(2) || 
-                //             $items->canShootArrows($world)
-                //         ) &&
-                //         (
-                //             $items->has('FireRod') || 
-                //             $items->has('IceRod')
-                //         )
-                //     )
-                // );
-
-                // $swordedResult = $canGetArrgi && $canKillArrgi;
-                // break;
             case 'Mothula':
                 $swordedResult = 
                 (
@@ -87,12 +61,6 @@ class Sworded extends Swordless
                     $items->canGetGoodBee()
                 );
                 break;
-                // $swordedResult = ($world->config('itemPlacement') !== 'basic' || $items->hasSword(2) || ($items->canExtendMagic(2) && $items->has('FireRod')))
-                //     && ($items->hasSword() || $items->has('Hammer')
-                //         || ($items->canExtendMagic(2) && ($items->has('FireRod') || $items->has('CaneOfSomaria')
-                //             || $items->has('CaneOfByrna')))
-                //         || $items->canGetGoodBee());
-                // break;
             case 'Blind':
                 $swordedResult = 
                 (
@@ -122,15 +90,34 @@ class Sworded extends Swordless
                 );
                 break;
             case 'Vitreous':
-                $swordedResult = ($world->config('itemPlacement') !== 'basic' || $items->hasSword(2) || $items->canShootArrows($world))
-                    && ($items->has('Hammer') || $items->hasSword() || $items->canShootArrows($world));
+                $swordedResult = 
+                (
+                    $world->config('itemPlacement') !== 'basic' || 
+                    $items->hasAny(['Sword2', 'Bow'])
+                ) && 
+                $items->hasAny(['Hammer', 'Sword', 'Bow'], $world);
                 break;
             case 'Trinexx':
-                $swordedResult = $items->has('FireRod') && $items->has('IceRod')
-                        && ($world->config('itemPlacement') !== 'basic' || $items->hasSword(3) || ($items->canExtendMagic(2) && $items->hasSword(2)))
-                        && ($items->hasSword(3) || $items->has('Hammer')
-                            || ($items->canExtendMagic(2) && $items->hasSword(2))
-                            || ($items->canExtendMagic(4) && $items->hasSword()));
+                $swordedResult = $items->has('FireRod') && 
+                    $items->has('IceRod') && 
+                    (
+                        $world->config('itemPlacement') !== 'basic' || 
+                        $items->hasSword(3) || 
+                        (
+                            $items->canExtendMagic(2) && 
+                            $items->hasSword(2)
+                        )
+                    ) && 
+                    (
+                        $items->hasAny(['Sword3', 'Hammer']) ||
+                        (
+                            $items->canExtendMagic(2) && $items->hasSword(2)
+                        ) || 
+                        (
+                            $items->canExtendMagic(4) && 
+                            $items->hasSword()
+                        )
+                    );
                 break;
             default:
                 break;

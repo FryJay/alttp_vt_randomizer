@@ -694,9 +694,18 @@ class ItemCollection extends Collection
     {
         foreach ($itemList as $item)
         {
-            if ($this->has($item) 
+            if (substr($item, 0, 5) === "Sword") {
+                $swordLevel = 1;
+                if (strlen($item) === 6) {
+                    $swordLevel = substr($item, -1);
+                }
+                if ($this->hasSword($swordLevel))
+                {
+                    return True;
+                }
+            }
+            else if ($this->has($item) 
                || ($item === "Bow" && $this->canShootArrows($world))
-               || ($item === "Sword" && $this->hasSword())
                || ($item === "Bomb" && $this->canBombThings()))
             {
                 return True;
