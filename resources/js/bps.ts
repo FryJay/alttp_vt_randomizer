@@ -1,4 +1,4 @@
-import { crc32 } from "@stardazed/crc32";
+//import { crc32 } from "@stardazed/crc32";
 
 /**
  * Class to apply and create BPS's.
@@ -86,26 +86,26 @@ export default class BPS {
     this.patchTargetChecksum = buf32[1];
     this.patchChecksum = buf32[2];
 
-    if (
-      this.patchChecksum !==
-      crc32(this.patchFile.slice(0, this.patchFile.byteLength - 4))
-    ) {
-      throw new Error("Patch checksum incorrect");
-    }
+    // if (
+    //   this.patchChecksum !==
+    //   crc32(this.patchFile.slice(0, this.patchFile.byteLength - 4))
+    // ) {
+    //   throw new Error("Patch checksum incorrect");
+    // }
 
     return this;
   }
 
   setSource(file: ArrayBuffer) {
     this.sourceFile = new Uint8Array(file);
-    this.sourceChecksum = crc32(file);
+    // this.sourceChecksum = crc32(file);
 
     return this;
   }
 
   setTarget(file: ArrayBuffer) {
     this.targetFile = new Uint8Array(file);
-    this.targetChecksum = crc32(file);
+    // this.targetChecksum = crc32(file);
 
     return this;
   }

@@ -393,6 +393,8 @@ class GanonsTower extends Region
         $this->prize_location->setRequirements($this->can_complete);
 
         $this->can_enter = function ($locations, $items) {
+            $has_enough_crystals = $items->hasEnoughCrystals($this->world, 'crystals.tower');
+
             return $items->has('RescueZelda')
                 && ($this->world->config('itemPlacement') !== 'basic'
                     || (($this->world->config('mode.weapons') === 'swordless' || $items->hasSword(2)) && $items->hasHealth(12) && ($items->hasBottle(2) || $items->hasArmor())))

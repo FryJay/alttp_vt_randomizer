@@ -97,12 +97,11 @@ class Region
      */
     public function canPlaceBoss(Boss $boss, string $level = 'top'): bool
     {
-        foreach ($this->world->getRules() as $rule)
-        {
-            if (!$rule->canPlaceBoss($this->name, $boss->getName()))
-            {
-                return False;
-            }
+        if (
+            $this->name != "Ice Palace" && $this->world->config('mode.weapons') == 'swordless'
+            && $boss->getName() == 'Kholdstare'
+        ) {
+            return false;
         }
 
         return !in_array($boss->getName(), [

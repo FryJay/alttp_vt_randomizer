@@ -7,8 +7,10 @@ use ALttP\Support\ItemCollection;
 use ALttP\Support\LocationCollection;
 use ALttP\Support\ShopCollection;
 use ALttP\Sprite\Droppable;
-use ALttP\Rule\Swordless;
-use ALttP\Rule\Sworded;
+use ALttP\Rule\Boss;
+use ALttP\Rule\Boss\Swordless;
+use ALttP\Rule\Boss\BasicPlacement;
+use ALttP\Rule;
 use ErrorException;
 
 /**
@@ -186,21 +188,20 @@ abstract class World
                 $this->config['rom.HardMode'] = 1;
         }
 
-        // In swordless mode silvers are 100% required
+        // Add the basic boss rules.
+        $this->rules[] = new Boss();
+
         if ($this->config('mode.weapons') === 'swordless') {
             $this->rules[] = new Swordless();
         }
-        else {
-            $this->rules[] = new Sworded();
+
+        if ($this->config('itemPlacement') === 'basic') {
+            $this->rules[] = new BasicPlacement();
         }
 
         foreach ($this->rules as $rule)
         {
             $rule->initWorld($this->config);
-        }
-
-        if ($this->config('itemPlacement') === 'basic') {
-            $this->config['region.forceSkullWoodsKey'] = true;
         }
     }
 
@@ -213,12 +214,25 @@ abstract class World
     {
         foreach ($this->getRules() as $rule)
         {
-            if ($rule->canBeatBoss($this, $bossName, $items))
+            if ($rule->canBeatBoss($this, $bossName, $items) === False)
             {
-                return True;
+                return False;
             }
         }
-        return False;
+        return True;
+    }
+
+    public function checkCanEnterRegion($items, $regionName)
+    {
+
+        foreach ($this->getRules() as $rule)
+        {
+            if ($rule->canEnter($this, $regionName, $items) === False)
+            {
+                return False;
+            }
+        }
+        return True;
     }
 
     /**
@@ -497,7 +511,7 @@ abstract class World
     {
         $my_items = $collected ?? new ItemCollection($this->pre_collected_items);
         $my_items->setChecksForWorld($this->id);
-        $found = new ItemCollection();
+        $found = new ItemCollection;
         $available_locations = $this->getCollectableLocations();
 
         do {
@@ -1334,5 +1348,21 @@ abstract class World
             || $this->config('enemizer.enemyDamage') != 'default'
             || $this->config('enemizer.enemyHealth') != 'default'
             || $this->config('enemizer.potShuffle') != 'off';
+    }
+
+    public function getDifficultyLevel(): int
+    {
+        $difficultySetting = $this->config('item.functionality');
+        switch ($difficultySetting)
+        {
+            case "easy":
+                return 1;
+            case "hard":
+                return 3;
+            case "expert":
+                return 4;
+            default:
+                return 2;
+        }
     }
 }

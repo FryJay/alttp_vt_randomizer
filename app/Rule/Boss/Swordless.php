@@ -1,11 +1,12 @@
 <?php
 
-namespace ALttP\Rule;
+namespace ALttP\Rule\Boss;
 
 use ALttP\Rule;
+use ALttP\Rule\Boss;
 use ALttP\Item;
 
-class Swordless extends Rule
+class Swordless extends Boss
 {
     /**
      * This Rule changes the game to be swordless.
@@ -13,16 +14,14 @@ class Swordless extends Rule
 
     public function canBeatBoss($world, $bossName, $items)
     {
-        return parent::canBeatBoss($world, $bossName, $items);
-    }
-
-    public function canPlaceBoss($dungeonName, $bossName)
-    {
-        if ($dungeonName == "Ice Palace" && $bossName == "Kholdstare")
+        switch ($bossName)
         {
-            return False;
+            case 'Kholdstare':
+                return ($items->hasAny(['FireRod3']) || $items->hasAll(['Bombos2', 'FireRod2'])) 
+                    && $items->canMeltThings($world) && ($items->hasAny(['Hammer', 'FireRod3']) || $items->hasAll(['Bombos2', 'FireRod2']));
+            default:
+                return parent::canBeatBoss($world, $bossName, $items);
         }
-        return True;
     }
 
     public function initWorld(&$config)

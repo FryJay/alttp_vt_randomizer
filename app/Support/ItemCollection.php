@@ -437,6 +437,19 @@ class ItemCollection extends Collection
             && ($this->hasSword() || $this->has('Hookshot'));
     }
 
+    public function canAcquireFairy($world = null)
+    {
+        if ($world !== null)
+        {
+            $difficultyLevel = $world->getDifficultyLevel();
+
+            if ($difficultyLevel > 2) {
+                return False;
+            }
+        }
+        return True;
+    }
+
     /**
      * Requirements for water (bunny) revival
      *
@@ -444,7 +457,7 @@ class ItemCollection extends Collection
      */
     public function canBunnyRevive(): bool
     {
-        return $this->hasABottle() && $this->has('BugCatchingNet');
+        return $this->hasABottle() && $this->has('BugCatchingNet') && $this->canAcquireFairy();
     }
 
     /**
@@ -492,10 +505,22 @@ class ItemCollection extends Collection
      *
      * @return bool
      */
-    public function canExtendMagic($bars = 2.0)
+    public function canExtendMagic($world = null, $bars = 2.0)
     {
-        return ($this->has('QuarterMagic') ? 4 : ($this->has('HalfMagic') ? 2 : 1))
-            * ($this->bottleCount() + 1) >= $bars;
+        $magicModifier = 1.0;
+        if ($world !== null)
+        {
+            $difficultyLevel = $world->getDifficultyLevel();
+            if ($difficultyLevel === 3) {
+                $magicModifier = 0.5;
+            }
+            else if ($difficultyLevel === 4) {
+                $magicModifier = 0.25;
+            }
+        }
+        $baseMagic = ($this->has('QuarterMagic') ? 4 : ($this->has('HalfMagic') ? 2 : 1))
+            * ($this->bottleCount() + 1);
+        return ($baseMagic * $magicModifier) >= $bars;
     }
 
     /**
@@ -560,7 +585,7 @@ class ItemCollection extends Collection
             || $this->has('CaneOfSomaria')
             || ($this->canBombThings() && $enemies < 6
                 && $world->config('enemizer.enemyHealth', 'default') == 'default')
-            || ($this->has('CaneOfByrna') && ($enemies < 6 || $this->canExtendMagic())
+            || ($this->has('CaneOfByrna') && ($enemies < 6 || $this->canExtendMagic($world))
                 && $world->config('enemizer.enemyHealth', 'default') == 'default')
             || $this->canShootArrows($world)
             || $this->has('Hammer')
@@ -690,23 +715,62 @@ class ItemCollection extends Collection
             || $this->has('BottleWithGoldBee');
     }
 
+    protected function getLevelSuffix($itemName)
+    {
+        $lastChar = substr($itemName, -1);
+        if (is_numeric($lastChar)) {
+            return $lastChar;
+        }
+        return null;
+    }
+
+    protected function hasMatchingItem($item, $world)
+    {
+        $itemName = $item;
+        $suffix = $this->getLevelSuffix($item);
+        if ($suffix !== null)
+        {
+            $itemName = substr($itemName, 0, -1);
+        }
+        if ($itemName === "Sword") {
+            if ($this->hasSword($suffix ?? 1))
+            {
+                return True;
+            }
+        }
+        else if ($suffix !== null)
+        {
+            if ($this->hasEnoughMagic($world, $itemName, $suffix))
+            {
+                return True;
+            }
+        }
+        else if ($this->has($item) 
+            || ($item === "Bow" && $this->canShootArrows($world))
+            || ($item === "Bomb" && $this->canBombThings()))
+        {
+            return True;
+        }
+        return False;
+    }
+
+    public function hasAll($itemList, $world = null)
+    {
+        foreach ($itemList as $item)
+        {
+            if (!$this->hasMatchingItem($item, $world))
+            {
+                return False;
+            }
+        }
+        return True;
+    }
+
     public function hasAny($itemList, $world = null)
     {
         foreach ($itemList as $item)
         {
-            if (substr($item, 0, 5) === "Sword") {
-                $swordLevel = 1;
-                if (strlen($item) === 6) {
-                    $swordLevel = substr($item, -1);
-                }
-                if ($this->hasSword($swordLevel))
-                {
-                    return True;
-                }
-            }
-            else if ($this->has($item) 
-               || ($item === "Bow" && $this->canShootArrows($world))
-               || ($item === "Bomb" && $this->canBombThings()))
+            if ($this->hasMatchingItem($item, $world))
             {
                 return True;
             }
@@ -714,17 +778,17 @@ class ItemCollection extends Collection
         return False;
     }
 
-    public function hasRod($magicLevel = null)
+    public function hasRod($world, $magicLevel = null)
     {
-        return $this->hasEnoughMagic("FireRod", $magicLevel) || $this->hasEnoughMagic("IceRod", $magicLevel);
+        return $this->hasEnoughMagic($world, "FireRod", $magicLevel) || $this->hasEnoughMagic($world, "IceRod", $magicLevel);
     }
 
     public function hasCane($magicLevel = null)
     {
-        return $this->hasEnoughMagic("CaneOfByrna", $magicLevel) || $this->hasEnoughMagic("CaneOfSomaria", $magicLevel);
+        return $this->hasEnoughMagic($world, "CaneOfByrna", $magicLevel) || $this->hasEnoughMagic($world, "CaneOfSomaria", $magicLevel);
     }
 
-    public function hasEnoughMagic($magicItem, $magicLevel = null)
+    public function hasEnoughMagic($world, $magicItem, $magicLevel = null)
     {
         $hasItem = False;
         $hasEnoughMagic = True;
@@ -734,12 +798,19 @@ class ItemCollection extends Collection
             $hasItem = True;
         }
 
-        if (!$this->canExtendMagic($magicLevel))
+        if (!$this->canExtendMagic($world, $magicLevel))
         {
             $hasEnoughMagic = False;
         }
 
         return $hasItem && $hasEnoughMagic;
+    }
+
+    public function hasEnoughCrystals($world, $objective)
+    {
+        $crystalCount = ($this->has('Crystal1') + $this->has('Crystal2') + $this->has('Crystal3') + $this->has('Crystal4') + 
+                $this->has('Crystal5') + $this->has('Crystal6') + $this->has('Crystal7'));
+        return $crystalCount >= $world->config($objective, 7);
     }
 
     public function __toString()
